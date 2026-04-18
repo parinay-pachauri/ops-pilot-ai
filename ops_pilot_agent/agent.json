@@ -1,0 +1,15 @@
+{
+  "name": "ops_pilot_agent",
+  "description": "Multi-agent AI system for tasks, schedules, and notes.",
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["application/json"],
+  "skills": [
+    {
+      "id": "workflow_orchestration",
+      "name": "Workflow Orchestration",
+      "description": "Coordinates task, schedule, notes, and information agents to complete multi-step workflows"
+    }
+  ],
+  "capabilities": {},
+  "version": "1.0.0"
+}
