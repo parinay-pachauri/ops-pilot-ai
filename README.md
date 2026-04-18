@@ -1,109 +1,64 @@
 # OpsPilot AI
 
-OpsPilot AI is a multi-agent ADK project for managing tasks, schedules, and notes from a single API.
+OpsPilot AI is a multi-agent productivity assistant built using **Google
+ADK** and deployed on **Google Cloud Run**.
 
 ## Features
-- Primary orchestrator agent with four specialist sub-agents
-- Structured data persisted in SQLite
-- Multi-step workflow execution
-- API-based deployment on Cloud Run using ADK
 
-## Project structure
+-   AI agent powered by Gemini models
+-   Tool integrations for:
+    -   Task management
+    -   Notes storage
+    -   Event scheduling
+-   SQLite database for structured storage
+-   API-based architecture
 
-```text
-ops-pilot-ai/
-├── app/
-│   ├── agents/
-│   └── tools/
-├── ops_pilot_agent/
-│   ├── agent.py
-│   ├── agent.json
-│   └── requirements.txt
-└── .env.example
+## Architecture
+
+User → Cloud Run API → OpsPilot Agent → Tools → SQLite Database
+
+## Tech Stack
+
+-   Google ADK
+-   Gemini 2.5 Flash
+-   Python
+-   SQLite
+-   Cloud Run
+
+## Deployment Steps
+
+1.  Enable required services
+
+```{=html}
+<!-- -->
 ```
+    gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com aiplatform.googleapis.com
 
-## Local setup
+2.  Deploy the agent
 
-```bash
-python3 -m pip install --upgrade google-adk google-genai a2a-sdk
-export PATH=$PATH:/home/$USER/.local/bin
-export GOOGLE_GENAI_USE_VERTEXAI=TRUE
-export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project)
-export GOOGLE_CLOUD_LOCATION=us-central1
-export MODEL=gemini-2.5-flash
-adk web
+```{=html}
+<!-- -->
 ```
+    adk deploy cloud_run --project YOUR_PROJECT_ID --region us-central1 --service_name ops-pilot-ai --a2a ops_pilot_agent
 
-Then select `ops_pilot_agent` in the ADK UI.
+3.  Test the agent
 
-## Cloud Run deployment
+Create session
 
-```bash
-gcloud services enable \
-  run.googleapis.com \
-  cloudbuild.googleapis.com \
-  artifactregistry.googleapis.com \
-  aiplatform.googleapis.com
+    curl -X POST "$APP_URL/apps/ops_pilot_agent/users/user_123/sessions/session_001"
 
-PROJECT_ID=$(gcloud config get-value project)
-PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
-BUILD_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+Run agent
 
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:$BUILD_SA" \
-  --role="roles/run.builder"
+    curl -X POST "$APP_URL/run_sse"
 
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:$BUILD_SA" \
-  --role="roles/artifactregistry.writer"
+## Example Prompt
 
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:$BUILD_SA" \
-  --role="roles/storage.admin"
+    create a task called prepare presentation
 
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:$BUILD_SA" \
-  --role="roles/aiplatform.user"
+## Cloud Run URL
 
-adk deploy cloud_run \
-  --project "$PROJECT_ID" \
-  --region us-central1 \
-  --service_name ops-pilot-ai \
-  --a2a \
-  ops_pilot_agent
+Replace with your deployed URL.
 
-gcloud run services update ops-pilot-ai \
-  --region us-central1 \
-  --set-env-vars="GOOGLE_CLOUD_LOCATION=us-central1"
-```
+## Demo
 
-## Test the deployed API
-
-```bash
-export APP_URL="https://YOUR_SERVICE_URL.run.app"
-
-curl -X POST "$APP_URL/apps/ops_pilot_agent/users/user_123/sessions/session_001" \
-  -H "Content-Type: application/json" \
-  -d '{}'
-
-curl -X POST "$APP_URL/run_sse" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "app_name": "ops_pilot_agent",
-    "user_id": "user_123",
-    "session_id": "session_001",
-    "new_message": {
-      "role": "user",
-      "parts": [
-        {"text": "Create a design review event tomorrow at 3 PM for 1 hour, add two follow-up tasks, and save a short note."}
-      ]
-    },
-    "streaming": false
-  }'
-```
-
-## Example prompts
-- Create three high-priority tasks for my product launch next Friday.
-- Schedule a team sync tomorrow at 4 PM for 30 minutes and list my pending tasks.
-- Save a note titled Sprint Review and then create tasks from the action items.
-- What are my current tasks, meetings, and notes related to launch?
+Show: - Deployment - API request - Agent tool execution
